@@ -1,4 +1,82 @@
-# Alzhmind: Native ESP-IDF (C) Wearable Patient Safety System
+# Memoria / Alzhmind Assistive Ecosystem
+
+This repository now combines the existing **ESP-IDF wearable** with an
+optional, local-first companion stack: safe LAN discovery, a Flask caregiver
+dashboard, and opt-in on-device face-context cues. It is an assistive prototype,
+not a medical device or an emergency-response substitute. Validate thresholds,
+power reliability, privacy consent, and caregiver escalation procedures before
+any real-world use.
+
+## Quick start (laptop)
+
+```bash
+python3 -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+python auto_wifi_config.py              # finds GET /api/data on the LAN
+WEARABLE_URL=http://192.168.4.1 python app.py
+```
+
+Open `http://127.0.0.1:5000`. Set `DASHBOARD_HOST=0.0.0.0` only on a trusted
+LAN, and set a long random `DASHBOARD_TOKEN` before accepting `POST` writes.
+The dashboard writes telemetry and visit records to local SQLite (`memoria.db`).
+
+For opt-in vision support, install the commented optional packages in
+`requirements.txt`, obtain informed consent from everyone enrolled, and run:
+
+```bash
+python vision_companion.py --task-context "making tea"
+```
+
+Known face encodings are stored only in `data/profiles.json`; press `n` while a
+face is visible to enroll it, and `q` to stop. The program speaks a social cue
+once per visitor per three minutes and logs the local visit. A paused-motion
+prompt starts after 45 seconds only if `--task-context` was deliberately given.
+Set `HACKCLUB_API_KEY` to enable the optional Hack Club proxy fallback; otherwise
+it uses a fully local, generic prompt. Do not send face images or identity data
+to the proxy.
+
+## API contract
+
+The dashboard reads the existing ESP-IDF endpoint (`GET /api/data`) or accepts
+the same JSON shape at `POST /api/telemetry`. Its public read endpoints are:
+
+- `GET /api/live` — latest locally retained telemetry.
+- `GET /api/visits` — last 50 local visitor-context entries.
+- `POST /api/refresh` — polls `WEARABLE_URL/api/data`.
+
+With `DASHBOARD_TOKEN` set, write endpoints require
+`Authorization: Bearer <token>`. Keep the dashboard behind an authenticated
+reverse proxy/VPN for caregiver access; the included “video check-in” surface is
+intentionally not a video service because a real deployment needs authenticated,
+audited WebRTC or a compliant provider.
+
+## Firmware choices
+
+`main/` remains the production ESP-IDF implementation. It shares I2C GPIO
+21/22, GPS UART2 GPIO 16/17, and exposes `/api/data`. The removed hard-coded
+household Wi-Fi values have been replaced with empty build-time defaults; set
+credentials through deployment configuration and replace the default AP password
+before use. `esp32_firmware.ino` is a separate Arduino reference requested for
+Arduino IDE users. Copy `secrets.h.example` to `secrets.h`, install TinyGPSPlus,
+and set a unique AP password before flashing. It implements impact-plus-stillness
+fall detection, a 30-second local grace alarm, acknowledgement button GPIO 27,
+and the same telemetry schema. Its MAX30102 hook intentionally reports no pulse
+until you integrate and validate a sensor library.
+
+## Privacy and safety boundaries
+
+- Get meaningful consent, provide a visible off switch, and document who can
+  see data. Do not use this for covert monitoring.
+- Face encodings, telemetry, and logs are sensitive personal data: encrypt disks,
+  restrict OS accounts, set retention limits, and back up only with consent.
+- Firebase synchronization is not enabled by default. If added, use least-
+  privilege service credentials, server-side rules, and send only the minimum
+  consented fields. Never put Firebase keys or the Hack Club API key in source.
+- Test falls with a test rig, not a person; tune per wearer and always retain a
+  manual emergency path. A non-acknowledged alarm is a caregiver notification,
+  not proof of a fall.
+
+---
 
 A native **ESP-IDF (Pure C)** firmware for the ESP32 designed to safeguard Alzheimer's patients. The device monitors vital signs (heart rate), tracks real-time GPS coordinates, detects falls via 6-axis inertial motion, triggers localized audio/visual alarms, and continuously transmits live telemetry to a caregiver's laptop over Wi-Fi.
 

@@ -65,10 +65,17 @@ static const char *TAG = "ALZHMIND_MAIN";
 #define UDP_BROADCAST_PORT  5005        // Dedicated Wi-Fi telemetry broadcast port
 
 // ======================== WIFI CONFIGURATION =====================
-#define WIFI_STA_SSID       "Oneplus 15"
-#define WIFI_STA_PASS       "loqdumbnahh"
-#define WIFI_AP_SSID        "Alzhmind"
-#define WIFI_AP_PASS        "alzhmind321"
+/* Do not commit household Wi-Fi credentials. Configure these via an ESP-IDF
+ * build-time secret/configuration before deploying. Empty STA credentials keep
+ * the device in local SoftAP fallback mode. */
+#ifndef WIFI_STA_SSID
+#define WIFI_STA_SSID       ""
+#endif
+#ifndef WIFI_STA_PASS
+#define WIFI_STA_PASS       ""
+#endif
+#define WIFI_AP_SSID        "Alzhmind-Wearable"
+#define WIFI_AP_PASS        "CHANGE-ME-BEFORE-DEPLOYMENT"
 
 // ======================== SHARED SYSTEM STATE ====================
 typedef struct {

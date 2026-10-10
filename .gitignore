@@ -9,3 +9,9 @@ __pycache__/
 
 # Data logs
 *.csv
+
+# Local device and application credentials
+secrets.h
+.env
+data/
+memoria.db
