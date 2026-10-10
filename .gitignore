@@ -1,0 +1,11 @@
+# ESP-IDF Build Artifacts
+build/
+sdkconfig
+sdkconfig.old
+
+# Python
+__pycache__/
+*.pyc
+
+# Data logs
+*.csv
